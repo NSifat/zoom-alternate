@@ -51,6 +51,7 @@ const dom = {
     conferenceContainer: document.getElementById('conferenceContainer'),
     videoGrid: document.getElementById('videoGrid'),
     roomBadge: document.getElementById('roomBadge'),
+    userBadge: document.getElementById('userBadge'),
     
     // Controls
     toggleAudioBtn: document.getElementById('toggleAudioBtn'),
@@ -107,7 +108,10 @@ function initializeSocket() {
         // Connect to backend server
         // For GitHub Pages: use deployed backend URL
         // For localhost: use localhost:3000
-        const serverUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        const host = window.location.hostname;
+        const isLocalhost = host === 'localhost' || host === '127.0.0.1';
+        const isNativeApp = !!window.Capacitor?.isNativePlatform?.() || !!window.Capacitor;
+        const serverUrl = isLocalhost && !isNativeApp
             ? 'http://localhost:3000'
             : 'https://zoom-alternate-backend.onrender.com';
         
@@ -1174,7 +1178,7 @@ function switchRoom(newRoomId, options = {}) {
     // Update room badge
     state.roomId = newRoomId;
     const badgeLabel = newRoomId === state.mainRoomId ? `${newRoomId} (Main)` : newRoomId;
-    dom.roomBadge.textContent = `Room: ${badgeLabel}`;
+    dom.roomBadge.textContent = `Meeting ID: ${badgeLabel}`;
 
     // Close modal
     dom.breakoutModal.classList.add('hidden');
@@ -1794,6 +1798,38 @@ function initializeJoinForm() {
     if (roomCodeParam && dom.roomId) {
         dom.roomId.value = roomCodeParam;
     }
+
+    setupJoinTabs();
+}
+
+/**
+ * Join modal tabs (Join / Downloads)
+ */
+function setupJoinTabs() {
+    const tabButtons = document.querySelectorAll('.modal-tabs .tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    if (!tabButtons.length || !tabPanels.length) return;
+
+    const activateTab = (tabId) => {
+        tabButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabId);
+        });
+
+        tabPanels.forEach(panel => {
+            panel.classList.toggle('active', panel.id === tabId);
+        });
+    };
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (btn.dataset?.tab) {
+                activateTab(btn.dataset.tab);
+            }
+        });
+    });
+
+    activateTab('joinTab');
 }
 
 /**
@@ -1843,7 +1879,10 @@ dom.joinForm.addEventListener('submit', async (e) => {
         }
 
         // Update UI
-        dom.roomBadge.textContent = `Room: ${roomId}`;
+        dom.roomBadge.textContent = `Meeting ID: ${roomId}`;
+        if (dom.userBadge) {
+            dom.userBadge.textContent = `You: ${userName}`;
+        }
         setRoomIdInUrl(roomId);
         
         // Reinitialize button listeners after showing conference container
@@ -2024,85 +2063,9 @@ window.addEventListener('load', () => {
     }
     applySettingsVisibility();
 
-    // Auto-hide controls after 3 seconds of inactivity
-    setupControlsAutoHide();
-
     // Setup fullscreen button
     setupFullscreenButton();
 });
-
-// ============ CONTROLS AUTO-HIDE ============
-let controlsTimeout = null;
-let isControlsVisible = true;
-
-function setupControlsAutoHide() {
-    const controlsBar = document.querySelector('.controls-bar');
-    const conferenceContainer = document.getElementById('conferenceContainer');
-    
-    if (!controlsBar || !conferenceContainer) return;
-
-    const showControls = () => {
-        controlsBar.classList.remove('hidden');
-        isControlsVisible = true;
-        resetControlsTimer();
-    };
-
-    const hideControls = () => {
-        // Don't hide if in join modal
-        if (!conferenceContainer.classList.contains('hidden')) {
-            controlsBar.classList.add('hidden');
-            isControlsVisible = false;
-        }
-    };
-
-    const resetControlsTimer = () => {
-        if (controlsTimeout) {
-            clearTimeout(controlsTimeout);
-        }
-        controlsTimeout = setTimeout(hideControls, 3000);
-    };
-
-    // Show controls on mouse move
-    document.addEventListener('mousemove', (e) => {
-        // Check if mouse is in bottom 20% of screen or controls are hovered
-        const windowHeight = window.innerHeight;
-        const mouseY = e.clientY;
-        
-        if (mouseY > windowHeight * 0.8 || !isControlsVisible) {
-            showControls();
-        }
-    });
-
-    // Show controls on touch/tap (mobile)
-    let touchStartY = 0;
-    document.addEventListener('touchstart', (e) => {
-        touchStartY = e.touches[0].clientY;
-    });
-
-    document.addEventListener('touchmove', (e) => {
-        const touchY = e.touches[0].clientY;
-        const windowHeight = window.innerHeight;
-        
-        // Swipe up from bottom to show controls
-        if (touchStartY > windowHeight * 0.7 && touchY < touchStartY - 30) {
-            showControls();
-        }
-    });
-
-    // Tap bottom of screen to toggle controls (mobile)
-    document.addEventListener('touchend', (e) => {
-        const touchY = e.changedTouches[0].clientY;
-        const windowHeight = window.innerHeight;
-        
-        if (touchY > windowHeight * 0.8) {
-            if (isControlsVisible) {
-                hideControls();
-            } else {
-                showControls();
-            }
-        }
-    });
-
     // Keep controls visible when hovering over them
     controlsBar.addEventListener('mouseenter', () => {
         if (controlsTimeout) {
