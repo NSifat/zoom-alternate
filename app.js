@@ -2066,20 +2066,6 @@ window.addEventListener('load', () => {
     // Setup fullscreen button
     setupFullscreenButton();
 });
-    // Keep controls visible when hovering over them
-    controlsBar.addEventListener('mouseenter', () => {
-        if (controlsTimeout) {
-            clearTimeout(controlsTimeout);
-        }
-    });
-
-    controlsBar.addEventListener('mouseleave', () => {
-        resetControlsTimer();
-    });
-
-    // Initial timer
-    resetControlsTimer();
-}
 
 // ============ FULLSCREEN TOGGLE ============
 function setupFullscreenButton() {
