@@ -619,17 +619,47 @@ async function initializeLocalMedia() {
     } catch (error) {
         console.error('[Media Error]', error.name, ':', error.message);
         
-        let errorMsg = error.message;
+        let errorMsg = '';
         if (error.name === 'NotAllowedError') {
-            errorMsg = 'Camera/Microphone permission denied. Please allow access in browser settings.';
+            errorMsg = 'Camera/Microphone permission denied. You can still join without media.';
         } else if (error.name === 'NotFoundError') {
-            errorMsg = 'No camera or microphone found on this device.';
+            errorMsg = 'No camera or microphone found. Joining without media...';
         } else if (error.name === 'NotReadableError') {
-            errorMsg = 'Camera/Microphone is being used by another application.';
+            errorMsg = 'Camera/Microphone in use by another app. Joining without media...';
+        } else {
+            errorMsg = 'Could not access camera/microphone. Joining without media...';
         }
         
-        showToast(errorMsg, 'error');
-        return false;
+        showToast(errorMsg, 'warning');
+        
+        // Try to get audio only
+        try {
+            console.log('[Media] Trying audio only...');
+            state.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            console.log('[Media] ✓ Audio-only mode enabled');
+            
+            if (state.socket?.id) {
+                const localVideoTile = addVideoTile(state.socket.id, `${state.userName} (You)`, true);
+                updateVideoTile(state.socket.id, state.localStream);
+            }
+            
+            state.isVideoEnabled = false;
+            return true;
+        } catch (audioError) {
+            console.log('[Media] Audio also failed, joining without any media');
+            
+            // Join without any media - create empty stream
+            state.localStream = null;
+            state.isAudioEnabled = false;
+            state.isVideoEnabled = false;
+            
+            if (state.socket?.id) {
+                addVideoTile(state.socket.id, `${state.userName} (You)`, true);
+            }
+            
+            showToast('Joined without camera/microphone', 'info');
+            return true; // Allow joining anyway
+        }
     }
 }
 
@@ -652,8 +682,8 @@ function toggleAudio() {
     console.log('[toggleAudio] localStream:', state.localStream);
     
     if (!state.localStream) {
-        console.error('[toggleAudio] No local stream available!');
-        showToast('Microphone not initialized', 'error');
+        console.log('[toggleAudio] No local stream - user joined without media');
+        showToast('You joined without a microphone', 'warning');
         return;
     }
 
@@ -661,8 +691,8 @@ function toggleAudio() {
     console.log('[toggleAudio] Audio tracks found:', audioTracks.length);
     
     if (audioTracks.length === 0) {
-        console.error('[toggleAudio] No audio tracks in stream!');
-        showToast('No microphone track found', 'error');
+        console.log('[toggleAudio] No audio tracks - user has no microphone');
+        showToast('No microphone available', 'warning');
         return;
     }
 
@@ -710,8 +740,8 @@ function toggleVideo() {
     console.log('[toggleVideo] localStream:', state.localStream);
     
     if (!state.localStream) {
-        console.error('[toggleVideo] No local stream available!');
-        showToast('Camera not initialized', 'error');
+        console.log('[toggleVideo] No local stream - user joined without media');
+        showToast('You joined without a camera', 'warning');
         return;
     }
 
@@ -719,8 +749,8 @@ function toggleVideo() {
     console.log('[toggleVideo] Video tracks found:', videoTracks.length);
     
     if (videoTracks.length === 0) {
-        console.error('[toggleVideo] No video tracks in stream!');
-        showToast('No camera track found', 'error');
+        console.log('[toggleVideo] No video tracks - user has no camera');
+        showToast('No camera available', 'warning');
         return;
     }
 
@@ -1707,14 +1737,10 @@ dom.joinForm.addEventListener('submit', async (e) => {
         
         console.log('[Socket] Connected with ID:', state.socket.id);
 
-        // Initialize media
+        // Initialize media (optional - can join without it)
         console.log('[Media] Requesting camera/mic...');
         const mediaOk = await initializeLocalMedia();
-        if (!mediaOk) {
-            console.error('[Error] Failed to initialize media');
-            leaveMeeting();
-            return;
-        }
+        console.log('[Media] Media initialization result:', mediaOk);
 
         emitMediaState();
 
