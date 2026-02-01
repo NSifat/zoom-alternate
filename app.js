@@ -166,6 +166,11 @@ function initializeSocket() {
         // Add video tile
         addVideoTile(data.socketId, data.userName, false);
         
+        // Update users list if visible
+        if (!dom.usersSidebar.classList.contains('hidden')) {
+            updateUsersList();
+        }
+        
         showToast(`${data.userName} joined`, 'info');
     });
 
@@ -1346,24 +1351,45 @@ function toggleUsers() {
  * Update users list display
  */
 function updateUsersList() {
-    // Active users
+    // Active users - include self + all peers
     let activeHtml = '';
-    if (state.peers.size === 0 && !document.getElementById(`video-${state.socket.id}`)) {
-        activeHtml = '<div style="padding: 12px; text-align: center; color: var(--secondary-text); font-size: 12px;">No other users</div>';
-    } else {
-        state.peers.forEach((peer, socketId) => {
-            const initials = peer.userName.split(' ').map(n => n[0]).join('').toUpperCase();
-            activeHtml += `
-                <div class="user-item">
-                    <div class="user-avatar">${initials}</div>
-                    <div class="user-info">
-                        <div class="user-name">${peer.userName}</div>
-                    </div>
-                    <div class="user-status"></div>
+    let userCount = 0;
+    
+    // Add yourself first
+    if (state.socket && state.socket.id && state.userName) {
+        const initials = state.userName.split(' ').map(n => n[0]).join('').toUpperCase();
+        activeHtml += `
+            <div class="user-item">
+                <div class="user-avatar" style="background: linear-gradient(135deg, #10b981, #34d399);">${initials}</div>
+                <div class="user-info">
+                    <div class="user-name"><strong>${state.userName} (You)</strong></div>
                 </div>
-            `;
-        });
+                <div class="user-status" style="background: var(--success);"></div>
+            </div>
+        `;
+        userCount++;
     }
+    
+    // Add other peers
+    state.peers.forEach((peer, socketId) => {
+        const initials = peer.userName.split(' ').map(n => n[0]).join('').toUpperCase();
+        activeHtml += `
+            <div class="user-item">
+                <div class="user-avatar">${initials}</div>
+                <div class="user-info">
+                    <div class="user-name">${peer.userName}</div>
+                </div>
+                <div class="user-status"></div>
+            </div>
+        `;
+        userCount++;
+    });
+    
+    // Show empty message if no users
+    if (userCount === 0) {
+        activeHtml = '<div style="padding: 12px; text-align: center; color: var(--secondary-text); font-size: 12px;">Waiting for participants...</div>';
+    }
+    
     dom.activeUsersList.innerHTML = activeHtml;
     
     // Departed users
