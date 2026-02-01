@@ -376,29 +376,8 @@ body {
     object-fit: cover;
 }
 
-.video-tile.no-video video,
-.video-tile.no-video canvas {
-    display: none;
-}
-
 .video-tile.no-video {
     background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.video-tile.no-video::before {
-    content: attr(data-username);
-    font-size: 48px;
-    font-weight: 700;
-    color: var(--light-text);
-    text-transform: uppercase;
-    opacity: 0.9;
-    text-align: center;
-    padding: 20px;
-    z-index: 10;
-    position: relative;
 }
 }
 
