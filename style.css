@@ -496,6 +496,9 @@ body {
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
     animation: slideInRight 0.3s ease;
     transition: transform 0.3s ease, opacity 0.3s ease;
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .chat-sidebar.hidden {

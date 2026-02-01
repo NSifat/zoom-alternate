@@ -1352,13 +1352,13 @@ function applySettingsVisibility() {
     const enableChat = state.settings?.enableChat !== false;
     if (dom.chatSidebar) {
         if (!enableChat) {
+            // Chat disabled - hide completely
             dom.chatSidebar.style.display = 'none';
         } else {
-            dom.chatSidebar.style.display = 'flex';
-            // Keep chat hidden by default even if enabled, user must click toggle
-            if (!dom.chatSidebar.classList.contains('hidden')) {
-                dom.chatSidebar.classList.add('hidden');
-            }
+            // Chat enabled - remove display:none so hidden class can work
+            dom.chatSidebar.style.display = '';
+            // Keep chat hidden by default
+            dom.chatSidebar.classList.add('hidden');
         }
     }
     if (dom.toggleChatBtn) {
