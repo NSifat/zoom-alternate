@@ -376,6 +376,11 @@ body {
     object-fit: cover;
 }
 
+.video-tile.no-video video,
+.video-tile.no-video canvas {
+    display: none;
+}
+
 .video-tile.no-video {
     background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
     display: flex;
@@ -389,10 +394,12 @@ body {
     font-weight: 700;
     color: var(--light-text);
     text-transform: uppercase;
-    opacity: 0.8;
+    opacity: 0.9;
     text-align: center;
     padding: 20px;
-    z-index: 1;
+    z-index: 10;
+    position: relative;
+}
 }
 
 .video-tile-overlay {
