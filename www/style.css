@@ -904,15 +904,15 @@ body {
     left: 0;
     right: 0;
     transform: translateY(0);
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    transition: none;
     opacity: 1;
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .controls-bar.hidden {
-    transform: translateY(100%);
-    opacity: 0;
-    pointer-events: none;
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .controls-group {
@@ -1395,7 +1395,7 @@ body {
 }
 
 .controls-bar.hidden ~ .app-footer {
-    bottom: 12px;
+    bottom: 100px;
 }
 
 .app-footer:hover {
