@@ -1,0 +1,10 @@
+{
+  "appId": "com.zoomalternate.app",
+  "appName": "Zoom Alternate",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://nsifat.github.io/zoom-alternate",
+    "cleartext": false
+  }
+}
