@@ -495,10 +495,13 @@ body {
     z-index: 200;
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
     animation: slideInRight 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 .chat-sidebar.hidden {
-    display: none;
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
     animation: slideOutRight 0.3s ease;
 }
 
@@ -896,13 +899,19 @@ body {
     .chat-sidebar {
         width: 100%;
         height: auto;
-        max-height: 300px;
+        max-height: 40vh;
         position: fixed;
         bottom: 64px;
         right: auto;
+        top: auto;
         border-left: none;
         border-top: 1px solid var(--border-color);
         border-radius: 8px 8px 0 0;
+    }
+
+    .chat-sidebar.hidden {
+        transform: translateY(calc(100% + 64px));
+        opacity: 0;
     }
 
     .controls-group {

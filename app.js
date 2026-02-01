@@ -1351,7 +1351,15 @@ function applySettingsVisibility() {
     
     const enableChat = state.settings?.enableChat !== false;
     if (dom.chatSidebar) {
-        dom.chatSidebar.style.display = enableChat ? 'flex' : 'none';
+        if (!enableChat) {
+            dom.chatSidebar.style.display = 'none';
+        } else {
+            dom.chatSidebar.style.display = 'flex';
+            // Keep chat hidden by default even if enabled, user must click toggle
+            if (!dom.chatSidebar.classList.contains('hidden')) {
+                dom.chatSidebar.classList.add('hidden');
+            }
+        }
     }
     if (dom.toggleChatBtn) {
         dom.toggleChatBtn.style.display = enableChat ? 'inline-flex' : 'none';
