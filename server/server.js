@@ -12,8 +12,13 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'https://nsifat.github.io'
+    ],
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 

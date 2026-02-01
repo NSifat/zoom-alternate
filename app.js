@@ -92,12 +92,19 @@ const dom = {
 // ============ INITIALIZATION ============
 
 /**
- * Initialize Socket.IO connection with authentication token
+ * Initialize Socket.IO connection
  */
 function initializeSocket() {
     try {
-        const token = localStorage.getItem('authToken');
-        state.socket = io();
+        // Connect to backend server
+        // For GitHub Pages: use deployed backend URL
+        // For localhost: use localhost:3000
+        const serverUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3000'
+            : 'https://zoom-alternate-backend.onrender.com'; // Will update this after deployment
+        
+        console.log('[Socket] Connecting to:', serverUrl);
+        state.socket = io(serverUrl);
 
         state.socket.on('connect', () => {
             console.log('✓ Connected to signaling server');
