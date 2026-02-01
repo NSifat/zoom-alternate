@@ -305,28 +305,8 @@ body {
     display: grid;
     gap: 8px;
     padding: 8px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: auto;
     align-content: start;
-    max-height: 100%;
-}
-
-/* Custom scrollbar for video grid */
-.video-grid::-webkit-scrollbar {
-    width: 8px;
-}
-
-.video-grid::-webkit-scrollbar-track {
-    background: var(--darker-bg);
-}
-
-.video-grid::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 4px;
-}
-
-.video-grid::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-color);
 }
 
 /* Responsive grid layouts */
@@ -378,21 +358,6 @@ body {
 
 .video-tile.no-video {
     background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.video-tile.no-video::before {
-    content: attr(data-username);
-    font-size: 48px;
-    font-weight: 700;
-    color: var(--light-text);
-    text-transform: uppercase;
-    opacity: 0.8;
-    text-align: center;
-    padding: 20px;
-    z-index: 1;
 }
 
 .video-tile-overlay {
@@ -1190,18 +1155,11 @@ body {
     border-radius: 24px;
     font-size: 13px;
     z-index: 250;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, bottom 0.3s ease, visibility 0.3s ease;
+    opacity: 0.8;
+    transition: opacity 0.3s ease, bottom 0.3s ease;
     pointer-events: none;
     box-shadow: var(--shadow-md);
     border: 1px solid rgba(51, 65, 85, 0.5);
-}
-
-/* Only show footer when in conference (conference container is visible) */
-.conference-container:not(.hidden) ~ .app-footer {
-    opacity: 0.8;
-    visibility: visible;
 }
 
 .controls-bar.hidden ~ .app-footer {
