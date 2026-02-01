@@ -422,13 +422,13 @@ function initializeSocket() {
     state.socket.on('banned', (data) => {
         console.log('[Ban] You have been banned');
         
-        // Store ban in localStorage to prevent rejoining from this browser
+        // Store site-wide ban in localStorage
         const banData = {
-            roomId: state.roomId,
             timestamp: Date.now(),
-            userId: state.userId
+            userId: state.userId,
+            bannedBy: data.bannedBy || 'host'
         };
-        localStorage.setItem(`banned_${state.roomId}`, JSON.stringify(banData));
+        localStorage.setItem('site_banned', JSON.stringify(banData));
         
         showToast(data.message, 'error');
         setTimeout(() => {
@@ -1399,13 +1399,19 @@ function updateUsersList() {
     // Add other peers
     state.peers.forEach((peer, socketId) => {
         const initials = peer.userName.split(' ').map(n => n[0]).join('').toUpperCase();
+        const breakoutInfo = peer.breakoutRoom ? `<span class="breakout-indicator" title="In breakout room ${peer.breakoutRoom}"><i class="fas fa-door-open"></i> ${peer.breakoutRoom}</span>` : '';
+        const cameraIcon = peer.isVideoOn ? '<i class="fas fa-video" style="color: var(--success);" title="Camera on"></i>' : '<i class="fas fa-video-slash" style="color: var(--danger);" title="Camera off"></i>';
+        const micIcon = peer.isAudioOn ? '<i class="fas fa-microphone" style="color: var(--success);" title="Mic on"></i>' : '<i class="fas fa-microphone-slash" style="color: var(--danger);" title="Mic off"></i>';
+        
         activeHtml += `
             <div class="user-item" data-socket-id="${socketId}">
                 <div class="user-avatar">${initials}</div>
                 <div class="user-info">
                     <div class="user-name">${peer.userName}</div>
-                    <div class="user-mute-badge ${peer.isAudioOn ? 'hidden' : ''}">
-                        <i class="fas fa-microphone-slash"></i> Muted
+                    <div class="user-status-icons">
+                        ${cameraIcon}
+                        ${micIcon}
+                        ${breakoutInfo}
                     </div>
                 </div>
                 ${state.isHost ? `
@@ -1996,16 +2002,13 @@ dom.joinForm.addEventListener('submit', async (e) => {
             dom.roomId.value = roomId;
         }
 
-        // Check if banned from this room
-        const banData = localStorage.getItem(`banned_${roomId}`);
+        // Check if banned from the site
+        const banData = localStorage.getItem('site_banned');
         if (banData) {
             try {
                 const ban = JSON.parse(banData);
-                // Check if ban is less than 24 hours old (optional - remove if permanent)
-                if (Date.now() - ban.timestamp < 24 * 60 * 60 * 1000) {
-                    showToast('You are banned from this meeting', 'error');
-                    return;
-                }
+                showToast('You are banned from using this service', 'error');
+                return;
             } catch (e) {
                 console.error('Error parsing ban data', e);
             }
