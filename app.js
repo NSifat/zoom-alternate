@@ -412,6 +412,7 @@ function initializeSocket() {
         showToast(data.message, 'error');
         setTimeout(() => {
             leaveMeeting();
+            window.location.reload();
         }, 2000);
     });
 
@@ -420,9 +421,19 @@ function initializeSocket() {
      */
     state.socket.on('banned', (data) => {
         console.log('[Ban] You have been banned');
+        
+        // Store ban in localStorage to prevent rejoining from this browser
+        const banData = {
+            roomId: state.roomId,
+            timestamp: Date.now(),
+            userId: state.userId
+        };
+        localStorage.setItem(`banned_${state.roomId}`, JSON.stringify(banData));
+        
         showToast(data.message, 'error');
         setTimeout(() => {
             leaveMeeting();
+            window.location.reload();
         }, 2000);
     });
 
@@ -1983,6 +1994,21 @@ dom.joinForm.addEventListener('submit', async (e) => {
         if (!roomId) {
             roomId = `room-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
             dom.roomId.value = roomId;
+        }
+
+        // Check if banned from this room
+        const banData = localStorage.getItem(`banned_${roomId}`);
+        if (banData) {
+            try {
+                const ban = JSON.parse(banData);
+                // Check if ban is less than 24 hours old (optional - remove if permanent)
+                if (Date.now() - ban.timestamp < 24 * 60 * 60 * 1000) {
+                    showToast('You are banned from this meeting', 'error');
+                    return;
+                }
+            } catch (e) {
+                console.error('Error parsing ban data', e);
+            }
         }
 
         console.log('[Join] Attempting to join room...');

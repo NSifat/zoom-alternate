@@ -408,7 +408,15 @@ io.on('connection', (socket) => {
     console.log(`[Kick] ${socket.userName} kicking ${userName} (${socketId})`);
     
     const targetSocket = io.sockets.sockets.get(socketId);
-    if (targetSocket) {
+    if (targetSocket && targetSocket.currentRoom) {
+      // First notify all other users in the room that this user is leaving
+      io.to(targetSocket.currentRoom).emit('user-left', {
+        socketId: targetSocket.id,
+        userId: targetSocket.userId,
+        userName: targetSocket.userName
+      });
+      
+      // Then notify the kicked user and disconnect them
       targetSocket.emit('kicked', { message: 'You have been removed from the meeting' });
       targetSocket.disconnect(true);
     }
@@ -433,7 +441,15 @@ io.on('connection', (socket) => {
     global[roomKey].add(socketId);
     
     const targetSocket = io.sockets.sockets.get(socketId);
-    if (targetSocket) {
+    if (targetSocket && targetSocket.currentRoom) {
+      // First notify all other users in the room that this user is leaving
+      io.to(targetSocket.currentRoom).emit('user-left', {
+        socketId: targetSocket.id,
+        userId: targetSocket.userId,
+        userName: targetSocket.userName
+      });
+      
+      // Then notify the banned user and disconnect them
       targetSocket.emit('banned', { message: 'You have been banned from this meeting' });
       targetSocket.disconnect(true);
     }
