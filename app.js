@@ -33,6 +33,7 @@ const state = {
     peers: new Map(), // socketId -> { userName, isAudioOn, isVideoOn }
     bannedUsers: new Set(), // Set of banned user IDs
     breakoutRooms: [], // [{ id, name }]
+    departedUsers: [], // [{ userName, departureTime, socketId }]
     settings: {
         joinMuted: false,
         showBreakoutRooms: true,
@@ -66,6 +67,13 @@ const dom = {
     chatForm: document.getElementById('chatForm'),
     chatInput: document.getElementById('chatInput'),
     closeChatBtn: document.getElementById('closeChatBtn'),
+    
+    // Users
+    usersSidebar: document.getElementById('usersSidebar'),
+    toggleUsersBtn: document.getElementById('toggleUsersBtn'),
+    closeUsersBtn: document.getElementById('closeUsersBtn'),
+    activeUsersList: document.getElementById('activeUsersList'),
+    departedUsersList: document.getElementById('departedUsersList'),
     
     // Breakout rooms
     breakoutModal: document.getElementById('breakoutModal'),
@@ -556,6 +564,9 @@ async function createPeerConnection(peerId, initiator) {
  * @param {string} socketId - Socket ID of user to remove
  */
 function removeUser(socketId) {
+    // Get peer info before removing
+    const peer = state.peers.get(socketId);
+    
     // Close peer connection
     const peerConnection = state.peerConnections.get(socketId);
     if (peerConnection) {
@@ -566,6 +577,15 @@ function removeUser(socketId) {
     // Remove from peers list
     state.peers.delete(socketId);
 
+    // Track departed user with timestamp
+    if (peer) {
+        state.departedUsers.push({
+            userName: peer.userName,
+            departureTime: new Date(),
+            socketId: socketId
+        });
+    }
+
     // Remove video tile
     const videoTile = document.getElementById(`video-${socketId}`);
     if (videoTile) {
@@ -574,6 +594,11 @@ function removeUser(socketId) {
 
     // Update grid layout
     updateGridLayout();
+    
+    // Update users list if visible
+    if (!dom.usersSidebar.classList.contains('hidden')) {
+        updateUsersList();
+    }
 }
 
 /**
@@ -1301,7 +1326,66 @@ function updateControlButton(button, isActive) {
  */
 function toggleChat() {
     const isHidden = dom.chatSidebar.classList.toggle('hidden');
+    dom.usersSidebar.classList.add('hidden'); // Close users when opening chat
     console.log(`[Chat] Chat sidebar ${isHidden ? 'hidden' : 'shown'}`);
+}
+
+/**
+ * Toggle users panel
+ */
+function toggleUsers() {
+    const isHidden = dom.usersSidebar.classList.toggle('hidden');
+    dom.chatSidebar.classList.add('hidden'); // Close chat when opening users
+    if (!isHidden) {
+        updateUsersList();
+    }
+    console.log(`[Users] Users sidebar ${isHidden ? 'hidden' : 'shown'}`);
+}
+
+/**
+ * Update users list display
+ */
+function updateUsersList() {
+    // Active users
+    let activeHtml = '';
+    if (state.peers.size === 0 && !document.getElementById(`video-${state.socket.id}`)) {
+        activeHtml = '<div style="padding: 12px; text-align: center; color: var(--secondary-text); font-size: 12px;">No other users</div>';
+    } else {
+        state.peers.forEach((peer, socketId) => {
+            const initials = peer.userName.split(' ').map(n => n[0]).join('').toUpperCase();
+            activeHtml += `
+                <div class="user-item">
+                    <div class="user-avatar">${initials}</div>
+                    <div class="user-info">
+                        <div class="user-name">${peer.userName}</div>
+                    </div>
+                    <div class="user-status"></div>
+                </div>
+            `;
+        });
+    }
+    dom.activeUsersList.innerHTML = activeHtml;
+    
+    // Departed users
+    let departedHtml = '';
+    if (state.departedUsers.length === 0) {
+        departedHtml = '<div style="padding: 12px; text-align: center; color: var(--secondary-text); font-size: 12px;">No one has left yet</div>';
+    } else {
+        state.departedUsers.forEach(user => {
+            const initials = user.userName.split(' ').map(n => n[0]).join('').toUpperCase();
+            departedHtml += `
+                <div class="user-item departed">
+                    <div class="user-avatar">${initials}</div>
+                    <div class="user-info">
+                        <div class="user-name">${user.userName}</div>
+                        <div class="user-time">${new Date(user.departureTime).toLocaleTimeString()}</div>
+                    </div>
+                    <div class="user-status"></div>
+                </div>
+            `;
+        });
+    }
+    dom.departedUsersList.innerHTML = departedHtml;
 }
 
 /**
@@ -1822,11 +1906,13 @@ function initializeButtonListeners() {
     addButtonListener('toggleVideoBtn', toggleVideo, 'Video Toggle');
     addButtonListener('toggleScreenShareBtn', toggleScreenShare, 'Screen Share');
     addButtonListener('toggleChatBtn', toggleChat, 'Chat Toggle');
+    addButtonListener('toggleUsersBtn', toggleUsers, 'Users Toggle');
     addButtonListener('hostPanelBtn', openSettings, 'Host Panel');
     addButtonListener('settingsBtn', openSettings, 'Settings');
     addButtonListener('hangUpBtn', leaveMeeting, 'Hang Up');
     addButtonListener('shareCodeBtn', shareRoomCode, 'Share Code');
     addButtonListener('closeChatBtn', toggleChat, 'Close Chat');
+    addButtonListener('closeUsersBtn', toggleUsers, 'Close Users');
     addButtonListener('closeSettingsBtn', closeSettings, 'Close Settings');
     addButtonListener('returnMainBtn', returnToMainMeeting, 'Return Main');
     addButtonListener('pinScreenBtn', togglePinScreen, 'Pin Screen');

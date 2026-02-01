@@ -111,6 +111,30 @@
             </form>
         </aside>
 
+        <!-- Users Sidebar -->
+        <aside id="usersSidebar" class="users-sidebar hidden">
+            <div class="users-header">
+                <h3>Users</h3>
+                <button id="closeUsersBtn" class="btn btn-sm">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="users-container">
+                <div class="users-section">
+                    <h4 class="users-section-title">
+                        <i class="fas fa-circle-dot"></i> In Meeting
+                    </h4>
+                    <div id="activeUsersList" class="users-list"></div>
+                </div>
+                <div class="users-section">
+                    <h4 class="users-section-title">
+                        <i class="fas fa-sign-out-alt"></i> Left
+                    </h4>
+                    <div id="departedUsersList" class="users-list"></div>
+                </div>
+            </div>
+        </aside>
+
         <!-- Breakout Rooms Modal -->
         <div id="breakoutModal" class="modal hidden">
             <div class="modal-content">
@@ -170,6 +194,12 @@
                 <button id="toggleChatBtn" class="control-btn" title="Open chat">
                     <i class="fas fa-comments"></i>
                     <span class="control-label">Chat</span>
+                </button>
+
+                <!-- Users Control -->
+                <button id="toggleUsersBtn" class="control-btn" title="View users">
+                    <i class="fas fa-users"></i>
+                    <span class="control-label">Users</span>
                 </button>
 
                 <!-- Host Control (Host Only) -->

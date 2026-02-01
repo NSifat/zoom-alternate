@@ -546,6 +546,144 @@ body {
     animation: slideOutRight 0.3s ease;
 }
 
+/* ============ USERS SIDEBAR ============ */
+.users-sidebar {
+    position: absolute;
+    right: 0;
+    top: 56px;
+    width: 320px;
+    height: calc(100vh - 200px);
+    background: var(--card-bg);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    z-index: 200;
+    box-shadow: var(--shadow-xl);
+    animation: slideInRight 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+    border-radius: 12px 0 0 0;
+    backdrop-filter: blur(10px);
+    margin-bottom: 10px;
+}
+
+.users-sidebar.hidden {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+    animation: slideOutRight 0.3s ease;
+}
+
+.users-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.users-header h3 {
+    font-size: 16px;
+}
+
+.users-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.users-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.users-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--secondary-text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 8px;
+}
+
+.users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.user-item {
+    padding: 12px;
+    background: var(--control-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    animation: messageSlide 0.2s ease;
+}
+
+.user-item:hover {
+    background: rgba(37, 99, 235, 0.1);
+    border-color: var(--primary-color);
+}
+
+.user-item.departed {
+    opacity: 0.7;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+}
+
+.user-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.user-name {
+    font-weight: 600;
+}
+
+.user-time {
+    font-size: 11px;
+    color: var(--secondary-text);
+}
+
+.user-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    flex-shrink: 0;
+}
+
+.user-item.departed .user-status {
+    background: var(--danger);
+}
+
 @keyframes slideInRight {
     from {
         transform: translateX(100%);
