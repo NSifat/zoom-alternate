@@ -131,6 +131,17 @@ function initializeSocket() {
     state.socket.on('user-joined', async (data) => {
         console.log(`[Event] User joined: ${data.userName} (${data.socketId})`);
         
+        // Skip if this is our own socket ID or if we already have a connection
+        if (data.socketId === state.socket.id) {
+            console.log(`[Event] Ignoring self-join event`);
+            return;
+        }
+        
+        if (state.peerConnections.has(data.socketId)) {
+            console.log(`[Event] Connection already exists for ${data.socketId}, skipping duplicate`);
+            return;
+        }
+        
         state.peers.set(data.socketId, {
             userName: data.userName,
             isAudioOn: true,
@@ -144,7 +155,7 @@ function initializeSocket() {
         // Create peer connection for new user
         await createPeerConnection(data.socketId, shouldInitiate);
 
-        // Add local video tile
+        // Add video tile
         addVideoTile(data.socketId, data.userName, false);
         
         showToast(`${data.userName} joined`, 'info');
@@ -163,6 +174,17 @@ function initializeSocket() {
         }
         
         for (const user of data.users) {
+            // Skip if this is our own socket ID or if we already have a connection
+            if (user.socketId === state.socket.id) {
+                console.log(`[Event] Skipping self in existing users`);
+                continue;
+            }
+            
+            if (state.peerConnections.has(user.socketId)) {
+                console.log(`[Event] Connection already exists for ${user.socketId}, skipping`);
+                continue;
+            }
+            
             state.peers.set(user.socketId, {
                 userName: user.userName,
                 isAudioOn: true,
@@ -913,9 +935,11 @@ async function stopScreenShare() {
  * @returns {HTMLElement} The video tile element
  */
 function addVideoTile(socketId, userName, isLocal) {
-    // Check if tile already exists
-    if (document.getElementById(`video-${socketId}`)) {
-        return document.getElementById(`video-${socketId}`);
+    // Check if tile already exists - return it immediately
+    const existingTile = document.getElementById(`video-${socketId}`);
+    if (existingTile) {
+        console.log(`[Video] Tile already exists for ${userName}, skipping duplicate`);
+        return existingTile;
     }
 
     console.log(`[Video] Adding tile for ${userName} (${isLocal ? 'local' : 'remote'})`);
