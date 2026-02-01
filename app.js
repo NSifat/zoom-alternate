@@ -4,8 +4,6 @@
  */
 
 // ============ CONFIGURATION ============
-const API_BASE = window.API_BASE_URL || window.location.origin;
-
 const config = {
     iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
@@ -13,23 +11,6 @@ const config = {
         { urls: 'stun:stun2.l.google.com:19302' }
     ]
 };
-
-// ============ AUTHENTICATION CHECK ============
-function checkAuthentication() {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-        console.log('Not authenticated, redirecting to login');
-        window.location.href = 'login.html';
-        return false;
-    }
-    return true;
-}
-
-// Check auth on page load
-if (!checkAuthentication()) {
-    // Will redirect to login
-    throw new Error('Not authenticated');
-}
 
 // ============ STATE MANAGEMENT ============
 const state = {
@@ -116,26 +97,11 @@ const dom = {
 function initializeSocket() {
     try {
         const token = localStorage.getItem('authToken');
-        state.socket = io({
-            auth: {
-                authorization: `Bearer ${token}`
-            }
-        });
+        state.socket = io();
 
         state.socket.on('connect', () => {
             console.log('✓ Connected to signaling server');
             ensureLocalTile();
-        });
-
-        state.socket.on('auth-error', (error) => {
-            console.error('[Auth Error]', error.message);
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userName');
-            localStorage.removeItem('isOwner');
-            showToast('Session expired. Please login again.', 'error');
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 2000);
         });
 
         state.socket.on('connect_error', (error) => {
@@ -1301,20 +1267,25 @@ function closeSettings() {
  * Logout user
  */
 function logout() {
-    if (confirm('Are you sure you want to logout?')) {
-        // Clear auth data
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userName');
-        localStorage.removeItem('isOwner');
-        localStorage.removeItem('conferenceSettings');
-        
-        // Disconnect socket
+    if (confirm('Are you sure you want to leave the meeting?')) {
+        // Disconnect and cleanup
         if (state.socket) {
             state.socket.disconnect();
         }
         
-        // Redirect to login
-        window.location.href = 'login.html';
+        // Stop all media streams
+        if (state.localStream) {
+            state.localStream.getTracks().forEach(track => track.stop());
+        }
+        if (state.screenStream) {
+            state.screenStream.getTracks().forEach(track => track.stop());
+        }
+        
+        // Clear settings
+        localStorage.removeItem('conferenceSettings');
+        
+        // Reload page to join modal
+        window.location.reload();
     }
 }
 
@@ -1673,7 +1644,7 @@ dom.joinForm.addEventListener('submit', async (e) => {
         state.userName = userName;
         state.roomId = roomId;
         state.mainRoomId = roomId;
-        state.userId = localStorage.getItem('authToken').substring(0, 16); // Use token start as ID
+        state.userId = `user-${Math.random().toString(36).substr(2, 9)}`;
 
         // Hide join modal, show conference
         console.log('[Join] Hiding join modal...');

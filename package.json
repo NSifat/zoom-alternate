@@ -1,0 +1,24 @@
+{
+  "name": "webrtc-video-conference",
+  "version": "1.0.0",
+  "description": "Local Jitsi-Meet-like WebRTC video conferencing app",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js"
+  },
+  "keywords": [
+    "webrtc",
+    "video-conference",
+    "socket.io"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.5.4"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}
