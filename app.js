@@ -923,6 +923,7 @@ function addVideoTile(socketId, userName, isLocal) {
     const tile = document.createElement('div');
     tile.className = `video-tile ${isLocal ? 'local' : ''} no-video`;
     tile.id = `video-${socketId}`;
+    tile.setAttribute('data-username', userName);
     tile.innerHTML = `
         <video 
             id="video-stream-${socketId}" 
