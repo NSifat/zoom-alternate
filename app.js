@@ -1887,6 +1887,161 @@ window.addEventListener('load', () => {
         }
     }
     applySettingsVisibility();
+
+    // Auto-hide controls after 3 seconds of inactivity
+    setupControlsAutoHide();
+
+    // Setup fullscreen button
+    setupFullscreenButton();
 });
 
-console.log('✓ WebRTC Conference App loaded');
+// ============ CONTROLS AUTO-HIDE ============
+let controlsTimeout = null;
+let isControlsVisible = true;
+
+function setupControlsAutoHide() {
+    const controlsBar = document.querySelector('.controls-bar');
+    const conferenceContainer = document.getElementById('conferenceContainer');
+    
+    if (!controlsBar || !conferenceContainer) return;
+
+    const showControls = () => {
+        controlsBar.classList.remove('hidden');
+        isControlsVisible = true;
+        resetControlsTimer();
+    };
+
+    const hideControls = () => {
+        // Don't hide if in join modal
+        if (!conferenceContainer.classList.contains('hidden')) {
+            controlsBar.classList.add('hidden');
+            isControlsVisible = false;
+        }
+    };
+
+    const resetControlsTimer = () => {
+        if (controlsTimeout) {
+            clearTimeout(controlsTimeout);
+        }
+        controlsTimeout = setTimeout(hideControls, 3000);
+    };
+
+    // Show controls on mouse move
+    document.addEventListener('mousemove', (e) => {
+        // Check if mouse is in bottom 20% of screen or controls are hovered
+        const windowHeight = window.innerHeight;
+        const mouseY = e.clientY;
+        
+        if (mouseY > windowHeight * 0.8 || !isControlsVisible) {
+            showControls();
+        }
+    });
+
+    // Show controls on touch/tap (mobile)
+    let touchStartY = 0;
+    document.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+    });
+
+    document.addEventListener('touchmove', (e) => {
+        const touchY = e.touches[0].clientY;
+        const windowHeight = window.innerHeight;
+        
+        // Swipe up from bottom to show controls
+        if (touchStartY > windowHeight * 0.7 && touchY < touchStartY - 30) {
+            showControls();
+        }
+    });
+
+    // Tap bottom of screen to toggle controls (mobile)
+    document.addEventListener('touchend', (e) => {
+        const touchY = e.changedTouches[0].clientY;
+        const windowHeight = window.innerHeight;
+        
+        if (touchY > windowHeight * 0.8) {
+            if (isControlsVisible) {
+                hideControls();
+            } else {
+                showControls();
+            }
+        }
+    });
+
+    // Keep controls visible when hovering over them
+    controlsBar.addEventListener('mouseenter', () => {
+        if (controlsTimeout) {
+            clearTimeout(controlsTimeout);
+        }
+    });
+
+    controlsBar.addEventListener('mouseleave', () => {
+        resetControlsTimer();
+    });
+
+    // Initial timer
+    resetControlsTimer();
+}
+
+// ============ FULLSCREEN TOGGLE ============
+function setupFullscreenButton() {
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    if (!fullscreenBtn) return;
+
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    // Update button icon when fullscreen state changes
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+    document.addEventListener('mozfullscreenchange', updateFullscreenButton);
+    document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+}
+
+function toggleFullscreen() {
+    const elem = document.documentElement;
+    
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && 
+        !document.mozFullScreenElement && !document.msFullscreenElement) {
+        // Enter fullscreen
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        }
+        showToast('Entered fullscreen mode', 'info');
+    } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+        showToast('Exited fullscreen mode', 'info');
+    }
+}
+
+function updateFullscreenButton() {
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    if (!fullscreenBtn) return;
+
+    const icon = fullscreenBtn.querySelector('i');
+    const label = fullscreenBtn.querySelector('.control-label');
+    
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || 
+                        document.mozFullScreenElement || document.msFullscreenElement;
+    
+    if (isFullscreen) {
+        icon.className = 'fas fa-compress';
+        label.textContent = 'Exit Full';
+    } else {
+        icon.className = 'fas fa-expand';
+        label.textContent = 'Fullscreen';
+    }
+}
