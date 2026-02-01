@@ -368,6 +368,7 @@ io.on('connection', (socket) => {
   });
 
   /**
+  /**
    * User disconnects
    */
   socket.on('disconnect', () => {
@@ -397,6 +398,45 @@ io.on('connection', (socket) => {
 
     participants.delete(socket.id);
     broadcastParticipants(socket.mainRoom);
+  });
+
+  /**
+   * Kick user from meeting
+   */
+  socket.on('kick-user', (data) => {
+    const { socketId, userName } = data;
+    console.log(`[Kick] ${socket.userName} kicking ${userName} (${socketId})`);
+    
+    const targetSocket = io.sockets.sockets.get(socketId);
+    if (targetSocket) {
+      targetSocket.emit('kicked', { message: 'You have been removed from the meeting' });
+      targetSocket.disconnect(true);
+    }
+  });
+
+  /**
+   * Ban user from meeting
+   */
+  socket.on('ban-user', (data) => {
+    const { socketId, userName } = data;
+    console.log(`[Ban] ${socket.userName} banning ${userName} (${socketId})`);
+    
+    // Add to banned list
+    if (!socket.mainRoom) {
+      socket.mainRoom = socket.currentRoom;
+    }
+    
+    const roomKey = `banned_${socket.mainRoom}`;
+    if (!global[roomKey]) {
+      global[roomKey] = new Set();
+    }
+    global[roomKey].add(socketId);
+    
+    const targetSocket = io.sockets.sockets.get(socketId);
+    if (targetSocket) {
+      targetSocket.emit('banned', { message: 'You have been banned from this meeting' });
+      targetSocket.disconnect(true);
+    }
   });
 
   /**

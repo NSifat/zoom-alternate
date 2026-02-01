@@ -405,6 +405,17 @@ function initializeSocket() {
     });
 
     /**
+     * Handle being kicked
+     */
+    state.socket.on('kicked', (data) => {
+        console.log('[Kicked] You have been removed from the meeting');
+        showToast(data.message, 'error');
+        setTimeout(() => {
+            leaveMeeting();
+        }, 2000);
+    });
+
+    /**
      * Handle being banned
      */
     state.socket.on('banned', (data) => {
@@ -1383,6 +1394,14 @@ function updateUsersList() {
                 <div class="user-info">
                     <div class="user-name">${peer.userName}</div>
                 </div>
+                <div class="user-actions">
+                    <button class="user-action-btn kick-btn" data-socket-id="${socketId}" title="Remove from meeting">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <button class="user-action-btn ban-btn" data-socket-id="${socketId}" title="Ban from meeting">
+                        <i class="fas fa-ban"></i>
+                    </button>
+                </div>
                 <div class="user-status"></div>
             </div>
         `;
@@ -1416,6 +1435,49 @@ function updateUsersList() {
         });
     }
     dom.departedUsersList.innerHTML = departedHtml;
+    
+    // Attach kick/ban button listeners
+    document.querySelectorAll('.kick-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const socketId = btn.dataset.socketId;
+            const peer = state.peers.get(socketId);
+            if (peer) {
+                kickUser(socketId, peer.userName, false);
+            }
+        });
+    });
+    
+    document.querySelectorAll('.ban-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const socketId = btn.dataset.socketId;
+            const peer = state.peers.get(socketId);
+            if (peer) {
+                kickUser(socketId, peer.userName, true);
+            }
+        });
+    });
+}
+
+/**
+ * Kick or ban a user from the meeting
+ * @param {string} socketId - Socket ID of user to kick
+ * @param {string} userName - Name of the user
+ * @param {boolean} ban - Whether to ban the user
+ */
+function kickUser(socketId, userName, ban) {
+    if (ban) {
+        if (confirm(`Ban ${userName} from this meeting? They won't be able to rejoin.`)) {
+            state.socket.emit('ban-user', { socketId, userName });
+            showToast(`${userName} has been banned`, 'info');
+        }
+    } else {
+        if (confirm(`Remove ${userName} from this meeting?`)) {
+            state.socket.emit('kick-user', { socketId, userName });
+            showToast(`${userName} has been removed`, 'info');
+        }
+    }
 }
 
 /**
