@@ -1743,11 +1743,12 @@ function initializeButtonListeners() {
     const addButtonListener = (id, handler, name) => {
         const element = document.getElementById(id);
         if (element) {
-            // Remove existing listener if any
+            // Remove ALL existing listeners first by cloning and replacing
+            const newElement = element.cloneNode(true);
+            element.parentNode.replaceChild(newElement, element);
+            
             const newHandler = function(e) {
                 console.log(`[Button Click] ${name} button clicked!`);
-                console.log(`[Button State] localStream exists: ${!!state.localStream}`);
-                console.log(`[Button State] isAudioEnabled: ${state.isAudioEnabled}, isVideoEnabled: ${state.isVideoEnabled}`);
                 e.stopPropagation();
                 try {
                     handler(e);
@@ -1757,11 +1758,7 @@ function initializeButtonListeners() {
                 }
             };
             
-            // Store handler reference for potential cleanup
-            element._clickHandler = newHandler;
-            element.removeEventListener('click', element._clickHandler);
-            element.addEventListener('click', newHandler);
-            
+            newElement.addEventListener('click', newHandler);
             console.log(`[Buttons] ✓ ${name} listener attached to ${id}`);
             return true;
         } else {
