@@ -440,6 +440,19 @@ io.on('connection', (socket) => {
   });
 
   /**
+   * Force mute a specific user
+   */
+  socket.on('force-mute-user', (data) => {
+    const { socketId, userName } = data;
+    console.log(`[Mute] ${socket.userName} muting ${userName} (${socketId})`);
+    
+    const targetSocket = io.sockets.sockets.get(socketId);
+    if (targetSocket) {
+      targetSocket.emit('force-mute');
+    }
+  });
+
+  /**
    * Get room status (for debugging)
    */
   socket.on('get-room-status', () => {

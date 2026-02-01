@@ -1389,19 +1389,19 @@ function updateUsersList() {
     state.peers.forEach((peer, socketId) => {
         const initials = peer.userName.split(' ').map(n => n[0]).join('').toUpperCase();
         activeHtml += `
-            <div class="user-item">
+            <div class="user-item" data-socket-id="${socketId}">
                 <div class="user-avatar">${initials}</div>
                 <div class="user-info">
                     <div class="user-name">${peer.userName}</div>
+                    <div class="user-mute-badge ${peer.isAudioOn ? 'hidden' : ''}">
+                        <i class="fas fa-microphone-slash"></i> Muted
+                    </div>
                 </div>
-                <div class="user-actions">
-                    <button class="user-action-btn kick-btn" data-socket-id="${socketId}" title="Remove from meeting">
-                        <i class="fas fa-times"></i>
-                    </button>
-                    <button class="user-action-btn ban-btn" data-socket-id="${socketId}" title="Ban from meeting">
-                        <i class="fas fa-ban"></i>
-                    </button>
-                </div>
+                ${state.isHost ? `
+                    <div class="user-menu-btn" data-socket-id="${socketId}" title="Manage user">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </div>
+                ` : ''}
                 <div class="user-status"></div>
             </div>
         `;
@@ -1437,27 +1437,97 @@ function updateUsersList() {
     dom.departedUsersList.innerHTML = departedHtml;
     
     // Attach kick/ban button listeners
-    document.querySelectorAll('.kick-btn').forEach(btn => {
+    // Attach user menu button listeners
+    document.querySelectorAll('.user-menu-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             const socketId = btn.dataset.socketId;
             const peer = state.peers.get(socketId);
-            if (peer) {
-                kickUser(socketId, peer.userName, false);
+            if (peer && state.isHost) {
+                showUserContextMenu(socketId, peer.userName, btn);
             }
         });
+    });
+}
+
+/**
+ * Show context menu for user management
+ * @param {string} socketId - Socket ID of user
+ * @param {string} userName - Name of the user
+ * @param {HTMLElement} button - The button that triggered the menu
+ */
+function showUserContextMenu(socketId, userName, button) {
+    // Remove any existing menus
+    const existingMenu = document.querySelector('.user-context-menu');
+    if (existingMenu) {
+        existingMenu.remove();
+    }
+    
+    const peer = state.peers.get(socketId);
+    const isMuted = !peer.isAudioOn;
+    
+    const menu = document.createElement('div');
+    menu.className = 'user-context-menu';
+    menu.innerHTML = `
+        <div class="context-menu-item mute-user-btn" data-socket-id="${socketId}">
+            <i class="fas fa-${isMuted ? 'microphone' : 'microphone-slash'}"></i>
+            ${isMuted ? 'Unmute' : 'Mute'}
+        </div>
+        <div class="context-menu-item kick-user-btn" data-socket-id="${socketId}">
+            <i class="fas fa-times"></i>
+            Remove
+        </div>
+        <div class="context-menu-item ban-user-btn" data-socket-id="${socketId}">
+            <i class="fas fa-ban"></i>
+            Ban
+        </div>
+    `;
+    
+    document.body.appendChild(menu);
+    
+    // Position menu at button
+    const rect = button.getBoundingClientRect();
+    menu.style.top = (rect.bottom + 5) + 'px';
+    menu.style.left = (rect.left - menu.offsetWidth + button.offsetWidth) + 'px';
+    
+    // Close menu when clicking outside
+    setTimeout(() => {
+        document.addEventListener('click', function closeMenu(e) {
+            if (!menu.contains(e.target) && e.target !== button) {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        });
+    }, 0);
+    
+    // Attach menu item listeners
+    menu.querySelector('.mute-user-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        muteUser(socketId, userName);
+        menu.remove();
     });
     
-    document.querySelectorAll('.ban-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const socketId = btn.dataset.socketId;
-            const peer = state.peers.get(socketId);
-            if (peer) {
-                kickUser(socketId, peer.userName, true);
-            }
-        });
+    menu.querySelector('.kick-user-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        kickUser(socketId, userName, false);
+        menu.remove();
     });
+    
+    menu.querySelector('.ban-user-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        kickUser(socketId, userName, true);
+        menu.remove();
+    });
+}
+
+/**
+ * Mute a user
+ * @param {string} socketId - Socket ID of user to mute
+ * @param {string} userName - Name of the user
+ */
+function muteUser(socketId, userName) {
+    state.socket.emit('force-mute-user', { socketId, userName });
+    showToast(`${userName} has been muted`, 'info');
 }
 
 /**
